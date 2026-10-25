@@ -138,6 +138,25 @@ it('shows a completed entry without screenshot', function (): void {
         ->assertDontSee('Download');
 });
 
+it('loads the nonced codebar analytics tracker in production only', function (): void {
+    config(['default.codebar_analytics.url' => 'https://analytics.codebar.ch/']);
+    $entry = entryWithShot($this->project);
+    $url = feedbackLink($entry->id)['url'];
+
+    $local = test()->get($url, NAVIGATE)->assertOk();
+    expect((string) $local->headers->get('Content-Security-Policy'))->not->toContain('connect-src')
+        ->and((string) $local->getContent())->not->toContain('analytics.codebar.ch');
+
+    app()['env'] = 'production';
+    $response = test()->get($url, NAVIGATE)->assertOk();
+    $csp = (string) $response->headers->get('Content-Security-Policy');
+    preg_match("/'nonce-([^']+)'/", $csp, $nonce);
+
+    expect($csp)->toContain('connect-src https://analytics.codebar.ch;')->toContain("default-src 'none'")
+        ->and((string) $response->getContent())->toContain('<script src="https://analytics.codebar.ch/js/script.js" nonce="'.$nonce[1].'" crossorigin="anonymous" defer></script>')
+        ->and(substr_count((string) $response->getContent(), '<script'))->toBe(2);
+});
+
 it('escapes everything the browser sent', function (): void {
     $entry = FeedbackEntry::factory()->for($this->project, 'project')->create([
         'message' => '<script>alert(1)</script>',

@@ -15,7 +15,7 @@ use Illuminate\Support\Str;
  * Page of one feedback entry behind a signed link (feedback:link, share link):
  * screenshot with the sender's message, technical details in a second tab.
  * The only HTML the API serves: one nonce'd inline script (tabs, copy
- * buttons), nothing loaded from other hosts.
+ * buttons) and, in production, the nonce'd codebar analytics tracker.
  */
 final class FeedbackPageController
 {
@@ -32,6 +32,7 @@ final class FeedbackPageController
         $environment = self::environment($entry);
         $console = self::rows($entry->console_log, ['type', 'message', 'source', 'line', 'column', 'stack']);
         $network = self::rows($entry->network_log, ['method', 'url', 'status', 'duration']);
+        $analyticsUrl = self::analyticsUrl();
         $customData = $entry->custom_data === null || $entry->custom_data === [] ? null : (string) json_encode($entry->custom_data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 
         return response()->view('feedback.show', [
@@ -51,12 +52,22 @@ final class FeedbackPageController
             'statusUrl' => $request->boolean('manage') ? FeedbackLink::status($entry, $expires, is_string($by) ? $by : null) : null,
             'expires' => $expires,
             'nonce' => $nonce,
+            'analyticsScript' => $analyticsUrl === null ? null : $analyticsUrl.'/js/script.js',
         ])->withHeaders([
-            'Content-Security-Policy' => "default-src 'none'; img-src 'self'; style-src 'nonce-{$nonce}'; script-src 'nonce-{$nonce}'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'",
+            'Content-Security-Policy' => "default-src 'none'; img-src 'self'; style-src 'nonce-{$nonce}'; script-src 'nonce-{$nonce}'; ".($analyticsUrl === null ? '' : "connect-src {$analyticsUrl}; ")."base-uri 'none'; form-action 'self'; frame-ancestors 'none'",
             'Cache-Control' => 'private, no-store',
             'Referrer-Policy' => 'no-referrer',
             'X-Content-Type-Options' => 'nosniff',
         ]);
+    }
+
+    /** Origin of codebar analytics when the tracker runs in this environment. */
+    private static function analyticsUrl(): ?string
+    {
+        $url = config('default.codebar_analytics.url');
+        $environments = (array) config('default.codebar_analytics.environments', []);
+
+        return is_string($url) && $url !== '' && app()->environment($environments) ? rtrim($url, '/') : null;
     }
 
     /** @return array<string, string> label => value, only what is known */
