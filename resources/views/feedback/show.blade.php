@@ -385,5 +385,8 @@
         });
     })();
 </script>
+@if ($analyticsScript)
+<script src="{{ $analyticsScript }}" nonce="{{ $nonce }}" crossorigin="anonymous" defer></script>
+@endif
 </body>
 </html>

@@ -17,4 +17,13 @@ return [
         'environment_id' => env('NIGHTWATCH_ENVIRONMENT_ID'),
     ],
 
+    /*
+     * codebar analytics (analytics.codebar.ch) on the feedback page, production only.
+     * The tracker sends the page URL; analytics drops the query string (the link signature).
+     */
+    'codebar_analytics' => [
+        'url' => env('CODEBAR_ANALYTICS_URL'),
+        'environments' => ['production'],
+    ],
+
 ];
