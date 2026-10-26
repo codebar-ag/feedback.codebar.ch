@@ -2,6 +2,8 @@ includes:
     - vendor/larastan/larastan/extension.neon
 
 parameters:
+    tmpDir: storage/framework/cache/phpstan
+
     level: 9
     paths:
         - app
