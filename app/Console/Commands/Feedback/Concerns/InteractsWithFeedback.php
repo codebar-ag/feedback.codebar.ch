@@ -19,7 +19,7 @@ trait InteractsWithFeedback
     /** Stores --by for the activity log entries written by this command. */
     protected function recordActor(): void
     {
-        $by = $this->hasOption('by') ? $this->option('by') : null;
+        $by = $this->hasOption('by') ? $this->input->getOption('by') : null;
 
         if (is_string($by) && trim($by) !== '') {
             Context::add('activity_by', trim($by));
