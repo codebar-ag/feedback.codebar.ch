@@ -49,6 +49,14 @@ return [
             'lock_table' => env('DB_CACHE_LOCK_TABLE'),
         ],
 
+        // Holds the schedule heartbeat only. Its own table, because Cache::flush() and
+        // optimize:clear empty the whole table of the default store.
+        'health' => [
+            'driver' => 'database',
+            'connection' => env('DB_CACHE_CONNECTION'),
+            'table' => 'health_cache',
+        ],
+
         'file' => [
             'driver' => 'file',
             'path' => storage_path('framework/cache/data'),
