@@ -12,6 +12,8 @@ export type ConsoleLevel = 'error' | 'warn' | 'info' | 'log' | 'debug';
 
 export type ScreenshotMode = 'optional' | 'required' | 'off';
 
+export type Position = 'bottom-right' | 'bottom-left';
+
 export interface FeedbackOptions {
   /** Public project key (fbk_live_…), public by design. */
   projectKey: string;
@@ -21,7 +23,8 @@ export interface FeedbackOptions {
   identity?: Identity | null;
   /** Overrides the project color loaded from the API. */
   colors?: { primary?: string };
-  position?: 'bottom-right' | 'bottom-left';
+  /** Launcher corner. Overrides the position set on the project. */
+  position?: Position;
   launcher?: { style?: 'icon' | 'text'; label?: string | null };
   screenshot?: { mode?: ScreenshotMode; format?: 'jpeg'; quality?: number; maxPixels?: number };
   diagnostics?: {

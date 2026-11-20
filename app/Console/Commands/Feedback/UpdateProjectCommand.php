@@ -20,6 +20,7 @@ final class UpdateProjectCommand extends Command
         {--add-ip=* : Add an allowed IP/CIDR}
         {--remove-ip=* : Remove an allowed IP/CIDR}
         {--color= : black, white or hex}
+        {--position= : Launcher corner: bottom-right or bottom-left}
         {--limit= : Daily limit, "none" removes it}
         {--activate : Activate the project}
         {--deactivate : Deactivate the project}
@@ -27,7 +28,7 @@ final class UpdateProjectCommand extends Command
         {--by= : Name recorded in the activity log}
         {--json : Output as JSON}';
 
-    protected $description = 'Change origins, IPs, color, limit and status of a feedback project';
+    protected $description = 'Change origins, IPs, color, position, limit and status of a feedback project';
 
     public function handle(): int
     {
@@ -85,7 +86,19 @@ final class UpdateProjectCommand extends Command
                 return self::INVALID;
             }
 
-            $project->theme = ['primary' => $color->primary];
+            $project->theme = [...($project->theme ?? []), 'primary' => $color->primary];
+        }
+
+        $positionInput = $this->stringOption('position');
+
+        if ($positionInput !== null) {
+            $position = $this->parsePosition($positionInput);
+
+            if ($position === null) {
+                return self::INVALID;
+            }
+
+            $project->theme = [...($project->theme ?? []), 'position' => $position];
         }
 
         $limit = $this->stringOption('limit');

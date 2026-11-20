@@ -65,6 +65,7 @@ it('validates create input', function (array $parameters, string $message): void
     'bad ip' => [['--origin' => ['https://a.ch'], '--ip' => ['10.0.0.0/40']], 'Invalid IP'],
     'bad color' => [['--origin' => ['https://a.ch'], '--color' => 'blau'], 'Invalid color'],
     'bad hex' => [['--origin' => ['https://a.ch'], '--color' => '#12345'], 'Invalid color'],
+    'bad position' => [['--origin' => ['https://a.ch'], '--position' => 'middle'], 'Invalid position'],
     'bad limit' => [['--origin' => ['https://a.ch'], '--limit' => '0'], '--limit must be'],
     'empty name' => [['name' => ' ', '--origin' => ['https://a.ch']], 'The name must be'],
 ]);
@@ -147,6 +148,26 @@ it('updates origins, IPs, color, limit and status', function (): void {
     expect(artisanJson('feedback:project:update', ['key' => $project->id, '--color' => '#ED813A'])['color']['on_primary'])->toBe('#101F3C');
 });
 
+it('sets the launcher position without touching the color', function (): void {
+    $project = FeedbackProject::factory()->create(['theme' => ['primary' => '#0A7C66']]);
+
+    test()->artisan('feedback:project:update', ['key' => $project->public_key, '--position' => 'bottom-left'])
+        ->expectsOutputToContain('Project updated.')
+        ->expectsOutputToContain('bottom-left')
+        ->assertExitCode(0);
+    expect($project->refresh())->theme->toBe(['primary' => '#0A7C66', 'position' => 'bottom-left']);
+
+    expect(artisanJson('feedback:project:update', ['key' => $project->id, '--color' => 'black']))
+        ->position->toBe('bottom-left')
+        ->and($project->refresh()->theme)->toBe(['primary' => '#000000', 'position' => 'bottom-left']);
+
+    $created = artisanJson('feedback:project:create', ['name' => 'Links', '--origin' => ['https://a.ch'], '--position' => 'bottom-left']);
+    expect($created['position'])->toBe('bottom-left')
+        ->and(FeedbackProject::query()->findOrFail($created['id'])->theme)->toBe(['position' => 'bottom-left']);
+
+    expect(artisanJson('feedback:project:create', ['name' => 'Standard', '--origin' => ['https://b.ch']])['position'])->toBe('bottom-right');
+});
+
 it('validates update input', function (array $parameters, string $message, int $code = 2): void {
     $project = FeedbackProject::factory()->create(['allowed_origins' => ['https://a.ch']]);
 
@@ -158,6 +179,7 @@ it('validates update input', function (array $parameters, string $message, int $
     'bad origin' => [['--add-origin' => ['nope']], 'Invalid origin'],
     'bad ip' => [['--add-ip' => ['x']], 'Invalid IP'],
     'bad color' => [['--color' => 'x'], 'Invalid color'],
+    'bad position' => [['--position' => 'top-left'], 'Invalid position'],
     'bad limit' => [['--limit' => '-1'], '--limit must be'],
     'both flags' => [['--activate' => true, '--deactivate' => true], 'either --activate or --deactivate'],
     'long name' => [['--name' => str_repeat('a', 121)], 'The name must be'],

@@ -88,6 +88,7 @@ php artisan feedback:project:create "Example Website" --origin=https://www.examp
   Origins .................................................. https://www.example.com
   IPs ............................................................. (no restriction)
   Color ................................... #0A7C66 · text #FFFFFF · contrast 5.14:1
+  Position ............................................................ bottom-right
   Daily limit ........................................................... (no limit)
 ```
 
@@ -125,7 +126,7 @@ const feedback = await CodebarFeedback.init({
   identity: { id: '4711', name: 'Anna Muster', email: 'anna@example.com' },
 
   colors: { primary: '#0A7C66' }, // overrides the project color: black, white or hex
-  position: 'bottom-right', // or 'bottom-left'
+  position: 'bottom-right', // or 'bottom-left': overrides the project position
   launcher: { style: 'icon' }, // 'text' shows `label` next to the icon
   zIndex: 2147483000,
 
@@ -271,7 +272,7 @@ feedback.on('after_send', ({ id }) => analytics.track('feedback_sent', { id }));
 ## Managing projects and feedback
 
 ```bash
-php artisan feedback:project:create "Name" --origin=https://app.example.com [--ip=10.0.0.0/8] [--color=black] [--limit=500]
+php artisan feedback:project:create "Name" --origin=https://app.example.com [--ip=10.0.0.0/8] [--color=black] [--position=bottom-left] [--limit=500]
 php artisan feedback:project:list
 php artisan feedback:project:show {key}
 php artisan feedback:project:update {key} --add-origin=https://staging.example.com --color=white --deactivate
@@ -310,6 +311,7 @@ Changing commands accept `--by="Name"`, which is recorded in the activity log.
 - **IPs**: single addresses or CIDR ranges, IPv4 and IPv6. No IPs means no restriction. A request must match the origins **and** the IPs.
 - **Visibility**: the widget only appears on pages the API accepts. It asks for the project config first and removes itself on a `403`, so a page outside the origins or IPs never shows a button. If the API cannot be reached, the widget still appears, in black.
 - **Color**: `black`, `white` or a hex value. Text becomes white or dark blue, whichever has more contrast, and button tones are adjusted until they reach 4.5:1.
+- **Position**: `--position=bottom-left` moves the launcher and panel to the bottom-left corner, `--position=bottom-right` (the default) moves them back. Use it when the website already has something in a corner (chat, cookie button, scroll-to-top); no change on the website is needed. Browsers pick it up within 10 minutes (config cache). A `position` passed to `init()` wins over the project setting.
 - **Daily limit**: `--limit=500` caps the entries per project and day, `--deactivate` / `--activate` switch a project off and on without deleting anything, `rotate-key` replaces a leaked key, `feedback:project:delete` removes a project with all its feedback and screenshots for good (asks first, `--force` skips the question).
 
 ## Feedback pages and share links
@@ -394,7 +396,7 @@ Set in `.env`, see [`config/feedback.php`](config/feedback.php):
 | Method | Path | |
 |---|---|---|
 | `POST` | `/v1/projects/{key}/feedback` | Submit feedback (`multipart/form-data`, `Idempotency-Key` header) |
-| `GET` | `/v1/projects/{key}/config` | Project color for the widget |
+| `GET` | `/v1/projects/{key}/config` | Project color and launcher position for the widget |
 | `GET` | `/v1/feedback/{id}?expires=…&signature=…` | Feedback page (signed link) |
 | `GET` | `/v1/feedback/{id}/screenshot?…` | Screenshot, `download=1` as attachment (signed link) |
 | `POST` | `/v1/feedback/{id}/status?manage=1&…` | `status=completed` or `status=open` (signed team link) |
