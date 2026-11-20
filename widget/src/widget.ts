@@ -23,6 +23,7 @@ import type {
   FeedbackPayload,
   Identity,
   Locale,
+  Position,
   ShotMeta,
 } from './types.js';
 import { raf, h } from './ui/dom.js';
@@ -86,6 +87,7 @@ export class Widget implements FeedbackInstance {
   private identity: Identity | null;
   private customData: Record<string, unknown>;
   private primary: string | null;
+  private position: Position | null;
   private shot: Shot | null = null;
   private shotError: string | null = null;
   private errors: FormErrors = {};
@@ -117,6 +119,7 @@ export class Widget implements FeedbackInstance {
     this.identity = options.identity ?? null;
     this.customData = { ...(options.customData ?? {}) };
     this.primary = parseColor(options.colors?.primary);
+    this.position = this.o.position;
     this.draft = new DraftStore(this.o.projectKey, this.o.persist, this.o.ttlHours * 3_600_000);
     this.network = networkBuffer(this.o.maxEntries);
 
@@ -180,6 +183,7 @@ export class Widget implements FeedbackInstance {
       return this;
     }
     this.primary ??= parseColor(config.primary);
+    this.position ??= config.position;
     this.checked = true;
     if (loaded) {
       const d = loaded.draft;
@@ -341,7 +345,7 @@ export class Widget implements FeedbackInstance {
     root.lang = bcp47(this.locale);
     root.classList.toggle('open', open);
     root.classList.toggle('away', away);
-    root.classList.toggle('left', this.o.position === 'bottom-left');
+    root.classList.toggle('left', this.position === 'bottom-left');
     root.dataset.state = state;
     const theme = deriveTheme(this.primary ?? '#000000');
     for (const [k, v] of Object.entries(themeVars(theme))) root.style.setProperty(k, v);

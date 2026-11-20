@@ -21,7 +21,7 @@ use Spatie\Activitylog\Support\LogOptions;
  * @property string $id
  * @property string $name
  * @property string $public_key
- * @property array{primary?: string}|null $theme
+ * @property array{primary?: string, position?: string}|null $theme
  * @property list<string> $allowed_origins
  * @property list<string> $allowed_ips
  * @property bool $is_active
@@ -36,6 +36,9 @@ class FeedbackProject extends Model
 
     use HasUlids;
     use LogsActivity;
+
+    /** Corners the widget launcher can sit in; the first one is the default. */
+    public const array POSITIONS = ['bottom-right', 'bottom-left'];
 
     protected $table = 'feedback_projects';
 
@@ -108,5 +111,13 @@ class FeedbackProject extends Model
         }
 
         return ProjectColor::derive($hex);
+    }
+
+    /** Corner of the widget launcher, falling back to bottom-right. */
+    public function position(): string
+    {
+        $position = $this->theme['position'] ?? null;
+
+        return in_array($position, self::POSITIONS, true) ? $position : self::POSITIONS[0];
     }
 }

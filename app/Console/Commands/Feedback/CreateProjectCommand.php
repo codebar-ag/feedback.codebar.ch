@@ -18,6 +18,7 @@ final class CreateProjectCommand extends Command
         {--origin=* : Allowed origin pattern (at least one)}
         {--ip=* : Allowed IP or CIDR range (empty = no restriction)}
         {--color= : black, white or hex (#0A7C66)}
+        {--position= : Launcher corner: bottom-right (default) or bottom-left}
         {--limit= : Daily limit for this project}
         {--allow-any-origin : Confirms the origin "*"}
         {--by= : Name recorded in the activity log}
@@ -59,6 +60,15 @@ final class CreateProjectCommand extends Command
             return self::INVALID;
         }
 
+        $position = null;
+        $positionInput = $this->stringOption('position');
+
+        if ($positionInput !== null && ($position = $this->parsePosition($positionInput)) === null) {
+            return self::INVALID;
+        }
+
+        $theme = array_filter(['primary' => $color?->primary, 'position' => $position]);
+
         $limit = $this->stringOption('limit');
 
         if ($limit !== null && (! ctype_digit($limit) || (int) $limit < 1)) {
@@ -74,7 +84,7 @@ final class CreateProjectCommand extends Command
         $project = FeedbackProject::query()->create([
             'name' => $name,
             'public_key' => $key,
-            'theme' => $color !== null ? ['primary' => $color->primary] : null,
+            'theme' => $theme !== [] ? $theme : null,
             'allowed_origins' => $origins,
             'allowed_ips' => $ips,
             'is_active' => true,

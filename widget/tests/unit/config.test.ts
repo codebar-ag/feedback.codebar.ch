@@ -7,7 +7,7 @@ describe('options', () => {
     expect(o).toMatchObject({
       projectKey: 'fbk_live_x',
       endpoint: 'https://feedback.example',
-      position: 'bottom-right',
+      position: null,
       launcherStyle: 'icon',
       screenshotMode: 'optional',
       quality: 0.82,
@@ -64,25 +64,31 @@ describe('options', () => {
 });
 
 describe('project config', () => {
-  it('loads and caches the color for 10 minutes', async () => {
-    const fetch = vi.fn(async () => new Response(JSON.stringify({ theme: { primary: '#0A7C66' } })));
-    expect(await loadProjectConfig('https://api', 'k1', fetch)).toEqual({ allowed: true, primary: '#0A7C66' });
-    expect(await loadProjectConfig('https://api', 'k1', fetch)).toEqual({ allowed: true, primary: '#0A7C66' });
+  it('loads and caches color and position for 10 minutes', async () => {
+    const fetch = vi.fn(async () => new Response(JSON.stringify({ theme: { primary: '#0A7C66' }, position: 'bottom-left' })));
+    const loaded = { allowed: true, primary: '#0A7C66', position: 'bottom-left' };
+    expect(await loadProjectConfig('https://api', 'k1', fetch)).toEqual(loaded);
+    expect(await loadProjectConfig('https://api', 'k1', fetch)).toEqual(loaded);
     expect(fetch).toHaveBeenCalledExactlyOnceWith('https://api/v1/projects/k1/config', expect.objectContaining({ credentials: 'omit' }));
     vi.spyOn(Date, 'now').mockReturnValue(Date.now() + 11 * 60 * 1000);
     await loadProjectConfig('https://api', 'k1', fetch);
     expect(fetch).toHaveBeenCalledTimes(2);
   });
 
+  it('ignores an unknown position', async () => {
+    const fetch = vi.fn(async () => new Response(JSON.stringify({ theme: { primary: '#0A7C66' }, position: 'top-left' })));
+    expect(await loadProjectConfig('https://api', 'k6', fetch)).toEqual({ allowed: true, primary: '#0A7C66', position: null });
+  });
+
   it('marks the page as not allowed on 403 and does not cache it', async () => {
     const fetch = vi.fn(async () => new Response('{"error":{"code":"origin_not_allowed"}}', { status: 403 }));
-    expect(await loadProjectConfig('https://api', 'k2', fetch)).toEqual({ allowed: false, primary: null });
+    expect(await loadProjectConfig('https://api', 'k2', fetch)).toEqual({ allowed: false, primary: null, position: null });
     await loadProjectConfig('https://api', 'k2', fetch);
     expect(fetch).toHaveBeenCalledTimes(2);
   });
 
   it('stays allowed without a color when the API is not reachable', async () => {
-    const offline = { allowed: true, primary: null };
+    const offline = { allowed: true, primary: null, position: null };
     expect(
       await loadProjectConfig(
         'https://api',

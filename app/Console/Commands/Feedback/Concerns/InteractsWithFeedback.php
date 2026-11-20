@@ -109,6 +109,17 @@ trait InteractsWithFeedback
         return ProjectColor::derive($hex);
     }
 
+    protected function parsePosition(string $input): ?string
+    {
+        if (! in_array($input, FeedbackProject::POSITIONS, true)) {
+            $this->components->error("Invalid position [{$input}]. Use ".implode(' or ', FeedbackProject::POSITIONS).'.');
+
+            return null;
+        }
+
+        return $input;
+    }
+
     /** @return list<string> */
     protected function listOption(string $name): array
     {
@@ -171,6 +182,7 @@ trait InteractsWithFeedback
             'public_key' => $project->public_key,
             'is_active' => $project->is_active,
             'color' => $color->toArray(),
+            'position' => $project->position(),
             'allowed_origins' => $project->allowed_origins,
             'allowed_ips' => $project->allowed_ips,
             'daily_limit' => $project->daily_limit,
@@ -190,6 +202,7 @@ trait InteractsWithFeedback
         $this->components->twoColumnDetail('Origins', implode(', ', $project->allowed_origins));
         $this->components->twoColumnDetail('IPs', $project->allowed_ips === [] ? '(no restriction)' : implode(', ', $project->allowed_ips));
         $this->components->twoColumnDetail('Color', $this->colorLine($project->color()));
+        $this->components->twoColumnDetail('Position', $project->position());
         $this->components->twoColumnDetail('Daily limit', $project->daily_limit === null ? '(no limit)' : (string) $project->daily_limit);
         $this->line('Init snippet:');
         $this->line('  '.$this->snippet($project));

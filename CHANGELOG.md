@@ -10,6 +10,7 @@ All notable changes to the API and the widget are documented here. The format fo
 - Feedback pages behind signed, expiring links with all details, console and network log and the screenshot (inline and download).
 - `feedback:link {id}` creates team links that can complete and reopen the entry (`--by` is logged, `--read-only`, `--expires`).
 - The API returns a read-only share link after sending (`FEEDBACK_SHARE_LINK_MINUTES`, `0` turns it off); the widget shows it on the thank you screen with a copy button, `after_send` receives it as `url`.
+- Launcher position per project: `feedback:project:create|update --position=bottom-left` (or `bottom-right`), returned by `/v1/projects/{key}/config` as `position` and applied by the widget without a change on the website. `position` in `init()` still wins.
 - Close button in marking mode (top right, bottom right on phones), same as Esc.
 
 ### Changed

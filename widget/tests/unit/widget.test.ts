@@ -86,6 +86,28 @@ describe('widget', () => {
     expect(fetchMock).toHaveBeenCalledOnce();
   });
 
+  it('sits bottom-right unless the project or init() says otherwise', async () => {
+    await start();
+    await flush();
+    expect($('.r').classList.contains('left')).toBe(false);
+  });
+
+  it('applies the launcher position from the API', async () => {
+    sessionStorage.clear();
+    fetchMock.mockImplementation(async () => json(200, { theme: { primary: '#0A7C66' }, position: 'bottom-left' }));
+    await start();
+    await flush();
+    expect($('.r').classList.contains('left')).toBe(true);
+  });
+
+  it('lets position override the project position', async () => {
+    sessionStorage.clear();
+    fetchMock.mockImplementation(async () => json(200, { theme: { primary: '#0A7C66' }, position: 'bottom-left' }));
+    await start({ position: 'bottom-right' });
+    await flush();
+    expect($('.r').classList.contains('left')).toBe(false);
+  });
+
   it('opens and closes, header has only icon and X', async () => {
     const w = await start();
     const events: string[] = [];

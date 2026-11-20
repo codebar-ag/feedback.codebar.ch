@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 use App\Models\FeedbackProject;
 
-it('returns the project color', function (): void {
-    $project = FeedbackProject::factory()->create(['theme' => ['primary' => '#0A7C66'], 'allowed_origins' => [TEST_ORIGIN]]);
+it('returns the project color and launcher position', function (): void {
+    $project = FeedbackProject::factory()->create(['theme' => ['primary' => '#0A7C66', 'position' => 'bottom-left'], 'allowed_origins' => [TEST_ORIGIN]]);
 
     test()->getJson("/v1/projects/{$project->public_key}/config", ['Origin' => TEST_ORIGIN])
         ->assertOk()
-        ->assertExactJson(['theme' => ['primary' => '#0A7C66']])
+        ->assertExactJson(['theme' => ['primary' => '#0A7C66'], 'position' => 'bottom-left'])
         ->assertHeader('Access-Control-Allow-Origin', TEST_ORIGIN)
         ->assertHeader('Cache-Control', 'max-age=600, public');
 });
@@ -20,7 +20,7 @@ it('falls back to the default color', function (?string $default, string $expect
 
     test()->getJson("/v1/projects/{$project->public_key}/config", ['Origin' => TEST_ORIGIN])
         ->assertOk()
-        ->assertExactJson(['theme' => ['primary' => $expected]]);
+        ->assertExactJson(['theme' => ['primary' => $expected], 'position' => 'bottom-right']);
 })->with([
     ['black', '#000000'],
     ['white', '#FFFFFF'],
@@ -65,3 +65,15 @@ it('lets a refused page read the 403 but not send', function (): void {
         ->assertForbidden()
         ->assertHeaderMissing('Access-Control-Allow-Origin');
 });
+
+it('falls back to bottom-right for a missing or unknown position', function (?array $theme): void {
+    $project = FeedbackProject::factory()->create(['theme' => $theme, 'allowed_origins' => [TEST_ORIGIN]]);
+
+    test()->getJson("/v1/projects/{$project->public_key}/config", ['Origin' => TEST_ORIGIN])
+        ->assertOk()
+        ->assertJsonPath('position', 'bottom-right');
+})->with([
+    'no theme' => [null],
+    'color only' => [['primary' => '#0A7C66']],
+    'unknown corner' => [['primary' => '#0A7C66', 'position' => 'top-left']],
+]);

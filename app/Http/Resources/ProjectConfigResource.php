@@ -17,9 +17,9 @@ final class ProjectConfigResource extends JsonResource
 {
     public static $wrap = null;
 
-    /** @return array{theme: array{primary: string}} */
+    /** @return array{theme: array{primary: string}, position: string} */
     public function toArray(Request $request): array
     {
-        return ['theme' => ['primary' => $this->color()->primary]];
+        return ['theme' => ['primary' => $this->color()->primary], 'position' => $this->position()];
     }
 }
